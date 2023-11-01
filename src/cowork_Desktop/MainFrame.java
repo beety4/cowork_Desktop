@@ -15,11 +15,12 @@ import javax.swing.JLabel;
 import javax.swing.BoxLayout;
 import java.awt.FlowLayout;
 import java.awt.Graphics;
+import javax.swing.JButton;
 
-import com.jgoodies.forms.layout.FormLayout;
-import com.jgoodies.forms.layout.ColumnSpec;
-import com.jgoodies.forms.layout.RowSpec;
-import com.jgoodies.forms.layout.FormSpecs;
+//import com.jgoodies.forms.layout.FormLayout;
+//import com.jgoodies.forms.layout.ColumnSpec;
+//import com.jgoodies.forms.layout.RowSpec;
+//import com.jgoodies.forms.layout.FormSpecs;
 
 public class MainFrame extends JFrame {
 
@@ -89,6 +90,13 @@ public class MainFrame extends JFrame {
 		lblImg.setIcon(updateIcon);
 		
 		bgPane.add(lblImg);
+		
+		JButton btnLogin = new JButton("Login");
+		btnLogin.setBounds(312, 375, 97, 23);
+		bgPane.add(btnLogin);
+		
+		JButton btnRegister = new JButton("Register");
+		btnRegister.setBounds(583, 375, 97, 23);
+		bgPane.add(btnRegister);
 	}
-
 }
