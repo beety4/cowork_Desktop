@@ -7,6 +7,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
+import java.util.Random;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
@@ -62,4 +63,28 @@ public class CryptoModule {
         }
         return null;
 	}
+	
+
+	// 인증 코드용 5자리 문자/숫자
+	public String getNewKey() {
+        StringBuffer key = new StringBuffer();
+        Random rnd = new Random();
+ 
+        for (int i = 0; i < 5; i++) {
+            int index = rnd.nextInt(3);
+            switch (index) {
+                case 0:	// 소문자
+                    key.append((char) ((int) (rnd.nextInt(26)) + 97));
+                    break;
+                case 1:	// 대문자
+                    key.append((char) ((int) (rnd.nextInt(26)) + 65));
+                    break;
+                case 2:	// 숫자
+                    key.append((rnd.nextInt(10)));
+                    break;
+            }
+        }
+        return key.toString();
+    }
+
 }

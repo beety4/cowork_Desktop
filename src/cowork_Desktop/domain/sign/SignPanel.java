@@ -272,11 +272,17 @@ public class SignPanel extends JPanel {
 		btnRegister.setBounds(112, 325, 142, 55);
 		btnRegister.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+				/*
+				 * 
+				 * Register 구현 부분
+				 * 
+				 * 
+				 * 
+				 */
 				String id = tbxID.getText();
 				String pw = new String(tbxPW.getPassword());
 				
 				UserDTO userDTO = new UserDTO();
-				
 				if(cu.isNullOrEmpty(new String[] {id, pw})) {
 					JOptionPane.showMessageDialog(null, "값을 입력해 주세요!");
 					return;
