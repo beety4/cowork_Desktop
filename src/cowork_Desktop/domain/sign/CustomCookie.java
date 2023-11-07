@@ -103,7 +103,6 @@ public class CustomCookie {
 				userDAO.rmFileHash(id);
 				invalidate();
 				setCookie();
-				return 0;
 			}
 			
 			session.setAttributes("sID", id);
