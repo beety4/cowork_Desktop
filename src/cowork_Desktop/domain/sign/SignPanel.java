@@ -17,10 +17,12 @@ import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 
-import cowork_Desktop.MainFrame;
 import cowork_Desktop.config.CustomUtility;
+import cowork_Desktop.domain.space.SpacePanel;
 import cowork_Desktop.dto.UserDTO;
 import javax.swing.JRadioButton;
+import javax.swing.JCheckBox;
+import javax.swing.JFrame;
 
 public class SignPanel extends JPanel {
 	private static final long serialVersionUID = 1L;
@@ -33,6 +35,7 @@ public class SignPanel extends JPanel {
 	private JTextField tbxID = new JTextField();
 	private JPasswordField tbxPW = new JPasswordField();
 	private JButton btnLogin = new JButton("Login");
+	private JCheckBox chkMaintain = new JCheckBox("로그인 유지");
 	private JButton btnGoRegister = new JButton("아이디가 없나요? 지금 회원가입하세요!");
 	
 	private JPanel pnlRegister = new JPanel();
@@ -69,15 +72,17 @@ public class SignPanel extends JPanel {
 	/**
 	 * Create the panel.
 	 */
-	public SignPanel(MainFrame win) {
+	public SignPanel(JFrame win) {
 		CustomUtility cu = new CustomUtility();
+		CustomSession session = new CustomSession();
+		CustomCookie customCookie = new CustomCookie();
 		setBounds(0, 0, 1100, 700);
 		setSize(1100, 700);
 		setBorder(new EmptyBorder(5, 5, 5, 5));
-		setLayout(null);
+		setLayout(null);		
 		
 	
-		pnlLogin.setBounds(374, 345, 344, 262);
+		pnlLogin.setBounds(374, 345, 344, 279);
 		pnlLogin.setVisible(true);
 		pnlLogin.setLayout(null);
 		pnlLogin.setBackground(Color.WHITE);
@@ -89,7 +94,7 @@ public class SignPanel extends JPanel {
 		pnlRegister.setBackground(Color.WHITE);
 		add(pnlRegister);
 		
-		
+
 		
 		
 		logo.setBounds(408, 74, 271, 166);
@@ -128,7 +133,15 @@ public class SignPanel extends JPanel {
 				int result = userDAO.login(id, pw);
 				switch(result) {
 					case 0:
-						JOptionPane.showMessageDialog(null, "성공!");
+						session.setAttributes("sID", id);
+						
+						// 자동 로그인 체크 시
+						if(chkMaintain.isSelected()) {
+							customCookie.setCookie();
+						}
+						
+						win.setContentPane(new SpacePanel(win));
+						win.revalidate();
 						break;
 					case -1:
 						JOptionPane.showMessageDialog(null, "ID가 올바르지 않습니다.");
@@ -146,7 +159,10 @@ public class SignPanel extends JPanel {
 		lblPW.setFont(new Font("굴림", Font.BOLD, 26));
 		pnlLogin.add(lblPW);
 		
-		btnGoRegister.setBounds(40, 223, 271, 15);
+		chkMaintain.setBounds(131, 219, 107, 23);
+		pnlLogin.add(chkMaintain);
+		
+		btnGoRegister.setBounds(40, 254, 271, 15);
 		btnGoRegister.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				pnlLogin.setVisible(false);
@@ -156,6 +172,8 @@ public class SignPanel extends JPanel {
 		btnGoRegister.setBorderPainted(false);
 		btnGoRegister.setContentAreaFilled(false);
 		pnlLogin.add(btnGoRegister);
+		
+		
 		
 		
 		
@@ -265,7 +283,7 @@ public class SignPanel extends JPanel {
 				}
 				
 				UserDAO userDAO = new UserDAO();
-				int result = userDAO.join(userDTO);
+				int result = userDAO.register(userDTO);
 				switch(result) {
 					case 0:
 						JOptionPane.showMessageDialog(null, "성공!");

@@ -1,6 +1,6 @@
 package cowork_Desktop.dto;
 
-import java.util.Date;
+import java.time.LocalDate;
 import lombok.Data;
 
 @Data
@@ -8,7 +8,7 @@ public class UserDTO {
 	private String id;
 	private String password;
 	private String name;
-	private Date birth;
+	private LocalDate birth;
 	private String gender;
 	private String email;
 	private String joindate;
