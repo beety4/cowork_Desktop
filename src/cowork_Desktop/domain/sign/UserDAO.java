@@ -62,10 +62,26 @@ public class UserDAO {
 		return -1;
 	}
 	
+	// ID로 Name 가져오기
+	public String getNameByID(String id) {
+		String query = "SELECT name FROM user_table WHERE id = ?";
+		ResultSet rs = null;
+		try {
+			PreparedStatement pstmt = conn.prepareStatement(query);
+			pstmt.setString(1, id);
+			
+			rs = pstmt.executeQuery();
+			return rs.getString(1);
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
 	
 	// 파일해쉬 저장 DAO
 	public int setFileHash(String id, String fileHash) {
-		String query = "INSERT INTO hash_table(id, hash) VALUES(?,?)";
+		String query = "INSERT INTO user_hash_table(id, hash) VALUES(?,?)";
 		try {
 			PreparedStatement pstmt = conn.prepareStatement(query);
 			pstmt.setString(1, id);
@@ -80,7 +96,7 @@ public class UserDAO {
 	
 	// id값 기준 파일해쉬 값 list로 가져오는 DAO
 	public ArrayList<String> getFileHash(String id) {
-		String query = "SELECT hash FROM hash_table WHERE id = ?";
+		String query = "SELECT hash FROM user_hash_table WHERE id = ?";
 		ArrayList<String> list = new ArrayList<>();
 		ResultSet rs = null;
 		try {
@@ -98,12 +114,12 @@ public class UserDAO {
 	}
 	
 	// id값 기준 파일해쉬 값 중 처음 값 삭제 DAO
-	public void rmFileHash(String id) {
-		String query = "DELETE FROM hash_table WHERE no = ";
-		String subquery = "(SELECT MIN(no) FROM hash_table WHERE id = ?)";
+	public void rmFileHash(String id, String hash) {
+		String query = "DELETE FROM hash_table WHERE id = ? AND hash = ?";
 		try {
-			PreparedStatement pstmt = conn.prepareStatement(query+subquery);
+			PreparedStatement pstmt = conn.prepareStatement(query);
 			pstmt.setString(1, id);
+			pstmt.setString(2, hash);
 			pstmt.executeUpdate();
 		} catch(Exception e) {
 			e.printStackTrace();

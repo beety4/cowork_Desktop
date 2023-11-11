@@ -133,7 +133,7 @@ public class SignPanel extends JPanel {
 				int result = userDAO.login(id, pw);
 				switch(result) {
 					case 0:
-						session.setAttributes("sID", id);
+						session.setAttributes("sName", userDAO.getNameByID(id));
 						
 						// 자동 로그인 체크 시
 						if(chkMaintain.isSelected()) {

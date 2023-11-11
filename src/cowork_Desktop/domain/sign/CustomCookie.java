@@ -11,11 +11,10 @@ import java.util.ArrayList;
 import java.util.StringTokenizer;
 
 import cowork_Desktop.config.CryptoModule;
-import cowork_Desktop.config.CustomUtility;
 import cowork_Desktop.dto.CookieDTO;
 
 public class CustomCookie {
-	private final String filePath = "src/cookie.dat";
+	private static final String filePath = "src/cookie.dat";
 	private CustomSession session = new CustomSession();
 	private CryptoModule cryptoModule = new CryptoModule();
 	
@@ -30,17 +29,17 @@ public class CustomCookie {
 			}
 			
 			// 쿠키에 넣을 데이터 넣을 데이터 세팅
-			String id = (String)session.getAttributes("sID");
-			LocalDateTime expireDate = LocalDateTime.now().plusDays(3);
+			String id = (String)session.getAttributes("sName");
+			LocalDateTime expireDate = LocalDateTime.now().plusDays(30);
 			DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyy-MM-dd/HH:mm:ss");
 			String datetime = expireDate.format(format);
 			
 			
+			// 쿠키 생성
 			CookieDTO cookie = new CookieDTO(id, datetime);
 			String digest = cryptoModule.aesCBCEncode(cookie.toString());
-			System.out.println(cookie.toString());
 			
-			// 쿠키 파일에 저장
+			// 쿠키 데이터 파일에 저장
 			BufferedWriter bw = new BufferedWriter(new FileWriter(filePath, false));
 			bw.write(digest);
 			bw.close();
@@ -99,13 +98,12 @@ public class CustomCookie {
 			// 쿠키 만료 확인 후 재발급
 			LocalDateTime now = LocalDateTime.now();
 			if(now.isAfter(cookie.getExpires())) {
-				// 만료된 쿠키라면 DB에서도 id기준 처음 입력되었던 값 삭제
-				userDAO.rmFileHash(id);
+				// 만료된 쿠키라면 DB에서도 삭제
+				userDAO.rmFileHash(id, local);
 				invalidate();
-				setCookie();
 			}
 			
-			session.setAttributes("sID", id);
+			session.setAttributes("sName", userDAO.getNameByID(id));
 		}catch(Exception e) {
 			e.printStackTrace();
 			return 1;
