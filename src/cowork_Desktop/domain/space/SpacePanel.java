@@ -43,6 +43,22 @@ public class SpacePanel extends JPanel {
 		lblNewLabel.setFont(new Font("굴림", Font.PLAIN, 41));
 		lblNewLabel.setBounds(184, 103, 752, 155);
 		add(lblNewLabel);
+		
+		
+		/*
+		 * 
+		 * == ToDo ==
+		 * 1. 현재 로그인한 세션의 Space 가져오기
+		 * 2. Space 만들기
+		 * 3. DAO -> createSpace, addMember 등등 만들기
+		 * 4. Room 가져오기
+		 * 
+		 * 
+		 */
+		
+		
+		
+		
 
 
 	}

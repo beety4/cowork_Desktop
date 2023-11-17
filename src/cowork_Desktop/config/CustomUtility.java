@@ -2,10 +2,13 @@ package cowork_Desktop.config;
 
 import java.awt.Image;
 import java.util.Arrays;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JRadioButton;
 
 public class CustomUtility {
 	// JLabel 혹은 JButton에 이미지 삽입과 크기를 조정하는 메소드
@@ -30,7 +33,22 @@ public class CustomUtility {
 		}
 	}
 	
+	// radioButton[], CheckButton[] 중 선택값 반환
+	public String getWhatSelected(JRadioButton[] rdbtns) {
+		for (JRadioButton rdbtn : rdbtns) {
+			if (rdbtn.isSelected()) {
+				return rdbtn.getText();
+			}
+		}
+		return null;
+	}
 	
-	
-	
+	// 이메일 확인용 정규표현식
+	public boolean isEmail(String email) {
+		String regex =  "^[a-zA-Z0-9+-_.]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$";
+		Pattern p = Pattern.compile(regex);
+		Matcher m = p.matcher(email);
+		return m.matches();
+	}
+
 }

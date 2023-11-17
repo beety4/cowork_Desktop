@@ -1,10 +1,8 @@
 package cowork_Desktop.domain.sign;
 
 import java.sql.Connection;
-import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.time.ZoneId;
 import java.util.ArrayList;
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -44,14 +42,11 @@ public class UserDAO {
 		try {
 			PreparedStatement pstmt = conn.prepareStatement(query);
 			String digest = bcryptEncoder.encode(userDTO.getPassword());
-			ZoneId zoneID = ZoneId.systemDefault();
-			Date date = (Date) Date.from(userDTO.getBirth().atStartOfDay(zoneID).toInstant());
-			
 			
 			pstmt.setString(1, userDTO.getId());
 			pstmt.setString(2, digest);
 			pstmt.setString(3, userDTO.getName());
-			pstmt.setDate(4, date);
+			pstmt.setString(4, userDTO.getBirth());
 			pstmt.setString(5, userDTO.getGender());
 			pstmt.setString(6, userDTO.getEmail());
 
@@ -71,7 +66,9 @@ public class UserDAO {
 			pstmt.setString(1, id);
 			
 			rs = pstmt.executeQuery();
-			return rs.getString(1);
+			if(rs.next()) {
+				return rs.getString(1);
+			}
 		} catch(Exception e) {
 			e.printStackTrace();
 		}

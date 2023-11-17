@@ -6,23 +6,31 @@ import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.text.SimpleDateFormat;
 
 import javax.swing.ButtonGroup;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
+import javax.swing.JProgressBar;
+import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 
+import com.toedter.calendar.JDateChooser;
+
 import cowork_Desktop.config.CustomUtility;
+import cowork_Desktop.domain.captcha.CaptchaConfig;
+import cowork_Desktop.domain.email.SendMail;
+import cowork_Desktop.domain.email.TimeThread;
 import cowork_Desktop.domain.space.SpacePanel;
 import cowork_Desktop.dto.UserDTO;
-import javax.swing.JRadioButton;
-import javax.swing.JCheckBox;
-import javax.swing.JFrame;
+import nl.captcha.Captcha;
 
 public class SignPanel extends JPanel {
 	private static final long serialVersionUID = 1L;
@@ -35,8 +43,10 @@ public class SignPanel extends JPanel {
 	private JTextField tbxID = new JTextField();
 	private JPasswordField tbxPW = new JPasswordField();
 	private JButton btnLogin = new JButton("Login");
-	private JCheckBox chkMaintain = new JCheckBox("로그인 유지");
+	private JCheckBox chkMaintain = new JCheckBox("자동 로그인");
 	private JButton btnGoRegister = new JButton("아이디가 없나요? 지금 회원가입하세요!");
+	private JTextField tbxCaptcha = new JTextField();
+	private JButton btnCaptchaRe = new JButton("새로고침");
 	
 	private JPanel pnlRegister = new JPanel();
 	private JLabel lblRegister= new JLabel("Register");
@@ -47,18 +57,28 @@ public class SignPanel extends JPanel {
 	private JLabel lblBirth = new JLabel("Birth :");
 	private JLabel lblGender = new JLabel("Gender : ");
 	private JLabel lblEmail = new JLabel("Email :");
-	private JLabel lblEmailchk = new JLabel("EmailChk");
+	private JLabel lblEmailchk = new JLabel("EmailChk :");
 	private JTextField tbxRID = new JTextField();
 	private JPasswordField tbxRPW = new JPasswordField();
 	private JPasswordField tbxRPWChk = new JPasswordField();
 	private JTextField tbxName = new JTextField();
-	private JTextField tbxBirth = new JTextField();
+	private JDateChooser chooserBirth = new JDateChooser();
 	private JRadioButton rdbMale = new JRadioButton("M");
 	private JRadioButton rdbFemale = new JRadioButton("F");
 	private JTextField tbxEmail = new JTextField();
 	private JTextField tbxEmailchk = new JTextField();
+	private JProgressBar pbTime = new JProgressBar(0,180);
 	private JButton btnRegister = new JButton("Register");
 	private JButton btnGoLogin = new JButton("아이디가 있으신가요? 로그인하세요!");
+	private TimeThread timeThread = new TimeThread(pbTime);
+	private String authKey = null;
+	private boolean emailChk = false;
+	
+	
+	
+	JLabel lblCaptcha = new JLabel("");
+	private final JButton btnSendMail = new JButton("전송");
+	private final JButton btnConfirm = new JButton("확인");
 	
 	@Override
 	public void paintComponent(Graphics g) {
@@ -74,21 +94,22 @@ public class SignPanel extends JPanel {
 	 */
 	public SignPanel(JFrame win) {
 		CustomUtility cu = new CustomUtility();
+		CaptchaConfig captchaConfig = new CaptchaConfig();
 		CustomSession session = new CustomSession();
 		CustomCookie customCookie = new CustomCookie();
 		setBounds(0, 0, 1100, 700);
 		setSize(1100, 700);
 		setBorder(new EmptyBorder(5, 5, 5, 5));
 		setLayout(null);		
-		
-	
-		pnlLogin.setBounds(374, 345, 344, 279);
+
+
+		pnlLogin.setBounds(374, 286, 344, 319);
 		pnlLogin.setVisible(true);
 		pnlLogin.setLayout(null);
 		pnlLogin.setBackground(Color.WHITE);
 		add(pnlLogin);
 		
-		pnlRegister.setBounds(374, 250, 344, 404);
+		pnlRegister.setBounds(202, 312, 727, 316);
 		pnlRegister.setVisible(false);
 		pnlRegister.setLayout(null);
 		pnlRegister.setBackground(Color.WHITE);
@@ -105,30 +126,72 @@ public class SignPanel extends JPanel {
 		lblLogin.setFont(new Font("굴림", Font.BOLD, 32));
 		pnlLogin.add(lblLogin);
 		
-		lblID.setBounds(23, 68, 56, 38);
+		lblID.setBounds(27, 45, 56, 38);
 		lblID.setFont(new Font("굴림", Font.BOLD, 26));
 		pnlLogin.add(lblID);
 		
-		tbxID.setBounds(80, 71, 231, 29);
-		tbxID.setFont(new Font("굴림", Font.PLAIN, 32));
+		tbxID.setBounds(84, 48, 231, 29);
+		tbxID.setFont(new Font("굴림", Font.PLAIN, 24));
 		tbxID.setColumns(10);
 		pnlLogin.add(tbxID);
 		
-		tbxPW.setBounds(80, 119, 231, 29);
-		tbxPW.setFont(new Font("굴림", Font.PLAIN, 32));
+		tbxPW.setBounds(84, 96, 231, 29);
+		tbxPW.setFont(new Font("굴림", Font.PLAIN, 24));
 		pnlLogin.add(tbxPW);
 		
-		btnLogin.setBounds(105, 158, 142, 55);
+		lblCaptcha.setBounds(16, 141, 148, 62);
+		Image cap = captchaConfig.getCaptChaImg();
+		ImageIcon captchaImg = new ImageIcon(cap);
+		lblCaptcha.setIcon(captchaImg);
+		pnlLogin.add(lblCaptcha);
+		
+		tbxCaptcha.setBounds(184, 141, 131, 29);
+		pnlLogin.add(tbxCaptcha);
+		tbxCaptcha.setColumns(10);
+		btnCaptchaRe.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				// 캡챠 이미지 새로고침
+				Image cap = captchaConfig.getCaptChaImg();
+				ImageIcon captchaImg = new ImageIcon(cap);
+				lblCaptcha.setIcon(captchaImg);
+			}
+		});
+		
+		btnCaptchaRe.setBounds(208, 180, 91, 23);
+		pnlLogin.add(btnCaptchaRe);
+		
+		btnLogin.setBounds(96, 213, 154, 45);
 		btnLogin.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+				Captcha saveCaptcha = (Captcha)session.getAttributes("captcha");
+				String captchaInput = tbxCaptcha.getText();
 				String id = tbxID.getText();
 				String pw = new String(tbxPW.getPassword());
 				
+				// Null or 공백 검사
 				if(cu.isNullOrEmpty(new String[] {id, pw})) {
 					JOptionPane.showMessageDialog(null, "값을 입력해 주세요!");
 					return;
 				}
 				
+				
+				// 보안 문자 검사 로직
+				if(cu.isNullOrEmpty(captchaInput)) {
+					JOptionPane.showMessageDialog(null, "보안문자를 입력해 주세요!");
+					return;
+				}
+				if(saveCaptcha.isCorrect(captchaInput) == false) {
+					JOptionPane.showMessageDialog(null, "보안문자가 틀렸습니다!");
+					Image cap = captchaConfig.getCaptChaImg();
+					ImageIcon captchaImg = new ImageIcon(cap);
+					lblCaptcha.setIcon(captchaImg);
+					tbxCaptcha.setText("");
+					return;
+				}
+				session.removeAttributes("captcha");
+				
+				
+				// DB와 로그인 로직 수행
 				UserDAO userDAO = new UserDAO();
 				int result = userDAO.login(id, pw);
 				switch(result) {
@@ -155,16 +218,17 @@ public class SignPanel extends JPanel {
 		cu.setImg(btnLogin, "src/cowork_Desktop/assets/img/btnLogin.png", 193, 83);
 		pnlLogin.add(btnLogin);
 		
-		lblPW.setBounds(12, 116, 67, 38);
+		lblPW.setBounds(16, 93, 67, 38);
 		lblPW.setFont(new Font("굴림", Font.BOLD, 26));
 		pnlLogin.add(lblPW);
 		
-		chkMaintain.setBounds(131, 219, 107, 23);
+		chkMaintain.setBounds(126, 264, 107, 23);
 		pnlLogin.add(chkMaintain);
 		
-		btnGoRegister.setBounds(40, 254, 271, 15);
+		btnGoRegister.setBounds(44, 293, 271, 15);
 		btnGoRegister.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+				// 로그인 회원가입 패널 변경
 				pnlLogin.setVisible(false);
 				pnlRegister.setVisible(true);
 			}
@@ -178,81 +242,77 @@ public class SignPanel extends JPanel {
 		
 		
 		
-		lblRegister.setBounds(104, 10, 150, 38);
+		
+		
+		
+		lblRegister.setBounds(284, 10, 150, 38);
 		lblRegister.setFont(new Font("굴림", Font.BOLD, 32));
 		pnlRegister.add(lblRegister);
 		
-		lblRID.setBounds(10, 51, 56, 24);
+		lblRID.setBounds(50, 60, 56, 24);
 		lblRID.setFont(new Font("굴림", Font.BOLD, 20));
 		pnlRegister.add(lblRID);
 		
-		tbxRID.setBounds(127, 51, 182, 24);
-		tbxRID.setFont(new Font("굴림", Font.PLAIN, 25));
+		tbxRID.setBounds(148, 61, 178, 24);
+		tbxRID.setFont(new Font("굴림", Font.PLAIN, 24));
 		tbxRID.setColumns(10);
 		pnlRegister.add(tbxRID);
 		
-		lblRPW.setBounds(10, 82, 67, 24);
+		lblRPW.setBounds(356, 60, 67, 24);
 		lblRPW.setFont(new Font("굴림", Font.BOLD, 20));
 		pnlRegister.add(lblRPW);
 		
-		tbxRPW.setBounds(127, 85, 182, 24);
-		tbxRPW.setFont(new Font("굴림", Font.PLAIN, 25));
+		tbxRPW.setBounds(469, 59, 200, 24);
+		tbxRPW.setFont(new Font("굴림", Font.PLAIN, 24));
 		pnlRegister.add(tbxRPW);
 		
 		lblPwChk.setFont(new Font("굴림", Font.BOLD, 20));
-		lblPwChk.setBounds(10, 116, 96, 24);
+		lblPwChk.setBounds(356, 94, 96, 24);
 		pnlRegister.add(lblPwChk);
 		
-		tbxRPWChk.setFont(new Font("굴림", Font.PLAIN, 25));
-		tbxRPWChk.setBounds(127, 119, 182, 24);
+		tbxRPWChk.setFont(new Font("굴림", Font.PLAIN, 24));
+		tbxRPWChk.setBounds(469, 93, 200, 24);
 		pnlRegister.add(tbxRPWChk);
-		
 		
 
 		
 		
 		
 		
-		
 		lblName.setFont(new Font("굴림", Font.BOLD, 20));
-		lblName.setBounds(10, 150, 96, 24);
+		lblName.setBounds(50, 94, 96, 24);
 		pnlRegister.add(lblName);
 		
 		
-		tbxName.setFont(new Font("굴림", Font.PLAIN, 25));
+		tbxName.setFont(new Font("굴림", Font.PLAIN, 24));
 		tbxName.setColumns(10);
-		tbxName.setBounds(127, 153, 182, 24);
+		tbxName.setBounds(148, 98, 178, 24);
 		pnlRegister.add(tbxName);
 		
 		lblBirth.setFont(new Font("굴림", Font.BOLD, 20));
-		lblBirth.setBounds(10, 187, 96, 24);
+		lblBirth.setBounds(50, 131, 96, 24);
 		pnlRegister.add(lblBirth);
 		
-		
-		tbxBirth.setFont(new Font("굴림", Font.PLAIN, 25));
-		tbxBirth.setColumns(10);
-		tbxBirth.setBounds(127, 187, 182, 24);
-		pnlRegister.add(tbxBirth);
-		
+		chooserBirth.setBounds(148, 132, 178, 24);
+		pnlRegister.add(chooserBirth);
 		
 		lblGender.setFont(new Font("굴림", Font.BOLD, 20));
-		lblGender.setBounds(10, 221, 96, 24);
+		lblGender.setBounds(50, 165, 96, 24);
 		pnlRegister.add(lblGender);
 		
 		lblEmail.setFont(new Font("굴림", Font.BOLD, 20));
-		lblEmail.setBounds(10, 258, 96, 24);
+		lblEmail.setBounds(356, 128, 96, 24);
 		pnlRegister.add(lblEmail);
 		
-		tbxEmail.setFont(new Font("굴림", Font.PLAIN, 25));
+		tbxEmail.setFont(new Font("굴림", Font.PLAIN, 12));
 		tbxEmail.setColumns(10);
-		tbxEmail.setBounds(127, 258, 182, 24);
+		tbxEmail.setBounds(469, 127, 131, 24);
 		pnlRegister.add(tbxEmail);
 		
-		
-		rdbMale.setBounds(127, 223, 56, 24);
+		rdbMale.setBounds(148, 167, 56, 24);
 		pnlRegister.add(rdbMale);
 		
-		rdbFemale.setBounds(255, 224, 54, 23);
+		rdbFemale.setBounds(272, 168, 54, 23);
 		pnlRegister.add(rdbFemale);
 		
 		ButtonGroup bg = new ButtonGroup();
@@ -261,44 +321,68 @@ public class SignPanel extends JPanel {
 		
 		
 		lblEmailchk.setFont(new Font("굴림", Font.BOLD, 20));
-		lblEmailchk.setBounds(10, 292, 96, 24);
+		lblEmailchk.setBounds(356, 165, 107, 24);
+		lblEmailchk.setVisible(false);
 		pnlRegister.add(lblEmailchk);
 		
-		tbxEmailchk.setFont(new Font("굴림", Font.PLAIN, 25));
+		tbxEmailchk.setFont(new Font("굴림", Font.PLAIN, 12));
 		tbxEmailchk.setColumns(10);
-		tbxEmailchk.setBounds(127, 292, 182, 24);
+		tbxEmailchk.setVisible(false);
+		tbxEmailchk.setBounds(470, 164, 129, 24);
 		pnlRegister.add(tbxEmailchk);
 		
-		btnRegister.setBounds(112, 325, 142, 55);
+		btnRegister.setBounds(284, 222, 150, 55);
 		btnRegister.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				/*
-				 * 
-				 * Register 구현 부분
-				 * 
-				 * 
-				 * 
-				 */
-				String id = tbxID.getText();
-				String pw = new String(tbxPW.getPassword());
+				String id = tbxRID.getText();
+				String pw = new String(tbxRPW.getPassword());
+				String pwchk = new String(tbxRPWChk.getPassword());
+				String name = tbxName.getText();
+				String birth = null;
+				String gender = cu.getWhatSelected(new JRadioButton[] {rdbMale, rdbFemale});
+				String email = tbxEmail.getText();
 				
-				UserDTO userDTO = new UserDTO();
-				if(cu.isNullOrEmpty(new String[] {id, pw})) {
+				
+				
+				// 유효성 검사
+				if(cu.isNullOrEmpty(new String[] {id, pw, pwchk, name, gender, email}) || chooserBirth.getDate() == null) {
 					JOptionPane.showMessageDialog(null, "값을 입력해 주세요!");
+					return;
+				} else {
+					SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd"); 
+					birth = df.format(chooserBirth.getDate());
+					System.out.println(birth);
+				}
+				if(pw.equals(pwchk) == false) {
+					JOptionPane.showMessageDialog(null, "패스워드가 일치하지 않습니다!");
+					return;
+				}
+				if(emailChk == false) {
+					JOptionPane.showMessageDialog(null, "이메일 인증을 완료해주세요!");
 					return;
 				}
 				
+				// 사용자 입력 값으로 DTO 생성
+				UserDTO userDTO = UserDTO.builder()
+						.id(id).password(pw)
+						.name(name)
+						.birth(birth)
+						.gender(gender)
+						.email(email)
+						.build();
+						
+				
+				// DB와 회원가입 로직 실행
 				UserDAO userDAO = new UserDAO();
 				int result = userDAO.register(userDTO);
 				switch(result) {
-					case 0:
-						JOptionPane.showMessageDialog(null, "성공!");
+					case 1:
+						JOptionPane.showMessageDialog(null, "회원가입 성공!");						
+						pnlRegister.setVisible(false);
+						pnlLogin.setVisible(true);
 						break;
 					case -1:
-						JOptionPane.showMessageDialog(null, "ID가 올바르지 않습니다.");
-						break;
-					case 1:
-						JOptionPane.showMessageDialog(null, "PW가 올바르지 않습니다.");
+						JOptionPane.showMessageDialog(null, "에러 : 관리자에게 문의하세요");
 						break;
 				}
 			}
@@ -306,9 +390,10 @@ public class SignPanel extends JPanel {
 		cu.setImg(btnRegister, "src/cowork_Desktop/assets/img/btnRegister.png", 193, 83);
 		pnlRegister.add(btnRegister);
 		
-		btnGoLogin.setBounds(65, 389, 244, 15);
+		btnGoLogin.setBounds(236, 287, 244, 15);
 		btnGoLogin.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+				// 회원가입 로그인 패널 변경
 				pnlLogin.setVisible(true);
 				pnlRegister.setVisible(false);
 			}
@@ -316,6 +401,63 @@ public class SignPanel extends JPanel {
 		btnGoLogin.setBorderPainted(false);
 		btnGoLogin.setContentAreaFilled(false);
 		pnlRegister.add(btnGoLogin);
+		
+		btnSendMail.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				SendMail sendMail = new SendMail();
+				String email = tbxEmail.getText();
+				
+				// 정규표현식을 통한 email 유효성 검사
+				if(cu.isEmail(email) == false) {
+					JOptionPane.showMessageDialog(null, "옳바른 형식의 Email 주소가 아닙니다!");
+					return;
+				}
+				
+				// 이메일 전송 후, 인증키 저장
+				authKey = sendMail.sendtoMail(email);
+				
+				// 시간제한 스레드 실행 및 화면 표시
+				JOptionPane.showMessageDialog(null, "이메일 전송 완료!");
+				timeThread.start();
+				tbxEmailchk.setVisible(true); btnConfirm.setVisible(true); 
+				lblEmailchk.setVisible(true); pbTime.setVisible(true);
+			}
+		});
+		btnSendMail.setBounds(603, 127, 67, 24);
+		pnlRegister.add(btnSendMail);
+		
+		btnConfirm.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				// 인증시간 만료 검사
+				if(pbTime.getValue() == 0) {
+					JOptionPane.showMessageDialog(null, "인증 시간이 만료되었습니다!");
+					return;
+				}
+				
+				// 인증키 검사
+				if(authKey.equals(tbxEmailchk.getText())) {
+					JOptionPane.showMessageDialog(null, "이메일 인증 완료!");
+					emailChk = true;
+					tbxEmail.setEnabled(false); tbxEmailchk.setEnabled(false);
+					btnSendMail.setEnabled(false); btnConfirm.setEnabled(false); pbTime.setVisible(false);
+					timeThread.stopThread();	// 시간제한 쓰레드 종료
+				} else {
+					JOptionPane.showMessageDialog(null, "인증키가 올바르지 않습니다!");
+					return;
+				}
+				
+			}
+		});
+		btnConfirm.setBounds(602, 165, 67, 24);
+		btnConfirm.setVisible(false);
+		pnlRegister.add(btnConfirm);
+		
+		pbTime.setStringPainted(true);
+		pbTime.setValue(180);
+		pbTime.setBounds(469, 198, 200, 14);
+		pbTime.setVisible(false);
+		pnlRegister.add(pbTime);
+		
 		
 	}
 }

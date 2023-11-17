@@ -20,6 +20,11 @@ public class CustomSession {
 		}
 	}
 	
+	// 세션 값 삭제
+	public void removeAttributes(String name) {
+		sessionMap.remove(name);
+	}
+	
 	// 세션 값 초기화
 	public void invalidate() {
 		sessionMap.clear();

@@ -11,5 +11,8 @@
 	<classpathentry kind="lib" path="src/cowork_Desktop/lib/spring-security-crypto-6.1.5.jar"/>
 	<classpathentry kind="lib" path="src/cowork_Desktop/lib/org-apache-commons-logging.jar"/>
 	<classpathentry kind="lib" path="src/cowork_Desktop/lib/javax.mail.jar"/>
+	<classpathentry kind="lib" path="src/cowork_Desktop/lib/simplecaptcha-1.2.1.jar"/>
+	<classpathentry kind="lib" path="jcalendar-1.4.jar"/>
+	<classpathentry kind="lib" path="src/cowork_Desktop/lib/activation.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
