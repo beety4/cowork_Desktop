@@ -351,7 +351,6 @@ public class SignPanel extends JPanel {
 				} else {
 					SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd"); 
 					birth = df.format(chooserBirth.getDate());
-					System.out.println(birth);
 				}
 				if(pw.equals(pwchk) == false) {
 					JOptionPane.showMessageDialog(null, "패스워드가 일치하지 않습니다!");
